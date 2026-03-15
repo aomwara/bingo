@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Bingo Caller</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #0b1c34;
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .left {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .right {
+            width: 50%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .title {
+            font-size: 60px;
+            letter-spacing: 12px;
+            opacity: .85;
+        }
+
+        .number {
+            font-size: 340px;
+            font-weight: bold;
+            margin: 30px 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 22px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .start {
+            background: #22c55e;
+            color: white;
+        }
+
+        .reset {
+            background: #ef4444;
+            color: white;
+        }
+
+        .full {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .auto {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .stop {
+            background: #64748b;
+            color: white;
+        }
+
+        input {
+            width: 60px;
+            padding: 6px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: none;
+            text-align: center;
+        }
+
+        .hint {
+            margin-top: 10px;
+            opacity: .6;
+        }
+
+        /* history */
+
+        .history {
+            flex: 1;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 15px;
+            overflow: auto;
+        }
+
+        .historyTitle {
+            margin-bottom: 10px;
+            font-size: 18px;
+            opacity: .8;
+        }
+
+        .historyGrid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+        }
+
+        .historyItem {
+            background: #334155;
+            padding: 8px;
+            text-align: center;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        /* grid */
+
+        .grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .cell {
+            background: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: .2s;
+        }
+
+        .active {
+            background: #22c55e;
+            color: white;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="left">
+
+            <div class="title">B I N G O</div>
+
+            <div id="number" class="number">--</div>
+
+            <div class="controls">
+
+                <button class="start" onclick="startGame()">Start</button>
+
+                <button class="reset" onclick="resetGame()">Reset</button>
+
+                <button class="full" onclick="toggleFullscreen()">Fullscreen</button>
+
+                <input id="autoTime" value="3">
+
+                <button class="auto" onclick="startAuto()">Auto</button>
+
+                <button class="stop" onclick="stopAuto()">Stop</button>
+
+            </div>
+
+            <div class="hint">
+                Spacebar = สุ่มเลข
+            </div>
+
+        </div>
+
+        <div class="right">
+
+            <div class="history">
+
+                <div class="historyTitle">เลขย้อนหลัง</div>
+
+                <div id="historyGrid" class="historyGrid"></div>
+
+            </div>
+
+            <div id="grid" class="grid"></div>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        let numbers = []
+        let history = []
+        let started = false
+        let autoTimer = null
+
+        const grid = document.getElementById("grid")
+        const numberDisplay = document.getElementById("number")
+        const historyGrid = document.getElementById("historyGrid")
+
+        // create grid
+        for (let i = 1; i <= 75; i++) {
+
+            let div = document.createElement("div")
+            div.className = "cell"
+            div.id = "cell-" + i
+            div.innerText = i
+
+            grid.appendChild(div)
+
+        }
+
+        // start
+        function startGame() {
+
+            numbers = []
+            history = []
+
+            for (let i = 1; i <= 75; i++)numbers.push(i)
+
+            historyGrid.innerHTML = ""
+
+            started = true
+
+            speechSynthesis.getVoices()
+
+        }
+
+        // reset
+        function resetGame() {
+
+            stopAuto()
+
+            numbers = []
+            history = []
+
+            for (let i = 1; i <= 75; i++)numbers.push(i)
+
+            document.querySelectorAll(".cell").forEach(c => {
+                c.classList.remove("active")
+            })
+
+            historyGrid.innerHTML = ""
+
+            numberDisplay.innerText = "--"
+
+            started = false
+
+        }
+
+        // speak
+        function speakNumber(num) {
+
+            let letter = ""
+
+            if (num <= 15) letter = "บี"
+            else if (num <= 30) letter = "ไอ"
+            else if (num <= 45) letter = "เอ็น"
+            else if (num <= 60) letter = "จี"
+            else letter = "โอ"
+
+            let text = letter + " " + num
+
+            return new Promise(resolve => {
+
+                let msg = new SpeechSynthesisUtterance(text)
+
+                msg.lang = "th-TH"
+                msg.rate = 0.9
+
+                msg.onend = resolve
+
+                speechSynthesis.speak(msg)
+
+            })
+
+        }
+
+        // history render
+        function renderHistory() {
+
+            historyGrid.innerHTML = ""
+
+            history.forEach(n => {
+
+                let div = document.createElement("div")
+                div.className = "historyItem"
+                div.innerText = n
+
+                historyGrid.appendChild(div)
+
+            })
+
+        }
+
+        // draw number
+        async function drawNumber() {
+
+            if (!started) return
+
+            if (numbers.length === 0) {
+
+                alert("เลขออกครบแล้ว")
+                stopAuto()
+                return
+
+            }
+
+            let index = Math.floor(Math.random() * numbers.length)
+            let num = numbers.splice(index, 1)[0]
+
+            numberDisplay.innerText = num
+
+            document.getElementById("cell-" + num).classList.add("active")
+
+            history.unshift(num)
+
+            renderHistory()
+
+            await speakNumber(num)
+
+        }
+
+        // auto
+        function startAuto() {
+
+            if (!started) startGame()
+
+            stopAuto()
+
+            let sec = parseInt(document.getElementById("autoTime").value) || 3
+
+            autoTimer = setInterval(async () => {
+
+                if (speechSynthesis.speaking) return
+
+                await drawNumber()
+
+            }, sec * 1000)
+
+        }
+
+        function stopAuto() {
+
+            if (autoTimer) {
+
+                clearInterval(autoTimer)
+                autoTimer = null
+
+            }
+
+        }
+
+        // space
+        document.addEventListener("keydown", function (e) {
+
+            if (e.code === "Space") {
+
+                e.preventDefault()
+
+                if (!speechSynthesis.speaking)
+                    drawNumber()
+
+            }
+
+        })
+
+        // fullscreen
+        function toggleFullscreen() {
+
+            if (!document.fullscreenElement)
+                document.documentElement.requestFullscreen()
+            else
+                document.exitFullscreen()
+
+        }
+
+        resetGame()
+
+    </script>
+
+</body>
+
+</html>
