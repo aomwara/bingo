@@ -2,7 +2,10 @@
 <html lang="th">
 
 <head>
+
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Bingo Caller</title>
 
     <style>
@@ -11,7 +14,6 @@
             font-family: Arial, Helvetica, sans-serif;
             background: #0b1c34;
             color: white;
-            overflow: hidden;
         }
 
         .container {
@@ -19,20 +21,15 @@
             height: 100vh;
         }
 
+        /* LEFT */
+
         .left {
             width: 50%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-
-        .right {
-            width: 50%;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            text-align: center;
         }
 
         .title {
@@ -44,8 +41,12 @@
         .number {
             font-size: 340px;
             font-weight: bold;
-            margin: 30px 0;
+            margin: 20px 0;
+            cursor: pointer;
+            user-select: none;
         }
+
+        /* CONTROLS */
 
         .controls {
             display: flex;
@@ -101,13 +102,24 @@
             opacity: .6;
         }
 
-        /* history */
+        /* RIGHT */
+
+        .right {
+            width: 50%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        /* HISTORY */
 
         .history {
-            flex: 1;
             background: #1e293b;
             border-radius: 12px;
             padding: 15px;
+            max-height: 140px;
             overflow: auto;
         }
 
@@ -119,26 +131,26 @@
 
         .historyGrid {
             display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+            gap: 6px;
         }
 
         .historyItem {
             background: #334155;
-            padding: 8px;
+            padding: 6px;
             text-align: center;
             border-radius: 6px;
             font-weight: bold;
         }
 
-        /* grid */
+        /* GRID */
 
         .grid {
             flex: 1;
             display: grid;
-            grid-template-columns: repeat(15, 1fr);
-            grid-template-rows: repeat(5, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+            gap: 8px;
+            overflow: auto;
         }
 
         .cell {
@@ -146,9 +158,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            border-radius: 10px;
+            font-size: 18px;
+            border-radius: 8px;
             font-weight: bold;
+            height: 38px;
             transition: .2s;
         }
 
@@ -157,18 +170,65 @@
             color: white;
             transform: scale(1.1);
         }
+
+        /* MOBILE */
+
+        @media (max-width:900px) {
+
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .left {
+                width: 100%;
+                padding: 20px 0;
+            }
+
+            .right {
+                width: 100%;
+                padding: 15px;
+            }
+
+            .title {
+                font-size: 36px;
+            }
+
+            .number {
+                font-size: 150px;
+                margin: 10px 0;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 10px 14px;
+            }
+
+            .grid {
+                grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
+            }
+
+            .cell {
+                font-size: 14px;
+                height: 34px;
+            }
+
+        }
     </style>
+
 </head>
 
 <body>
 
     <div class="container">
 
+        <!-- LEFT -->
+
         <div class="left">
 
             <div class="title">B I N G O</div>
 
-            <div id="number" class="number">--</div>
+            <div id="number" class="number" onclick="tapDraw()">--</div>
 
             <div class="controls">
 
@@ -187,10 +247,12 @@
             </div>
 
             <div class="hint">
-                Spacebar = สุ่มเลข
+                คอม: Spacebar | มือถือ: แตะเลขใหญ่
             </div>
 
         </div>
+
+        <!-- RIGHT -->
 
         <div class="right">
 
@@ -219,7 +281,8 @@
         const numberDisplay = document.getElementById("number")
         const historyGrid = document.getElementById("historyGrid")
 
-        // create grid
+        /* CREATE GRID */
+
         for (let i = 1; i <= 75; i++) {
 
             let div = document.createElement("div")
@@ -231,7 +294,8 @@
 
         }
 
-        // start
+        /* START */
+
         function startGame() {
 
             numbers = []
@@ -247,7 +311,8 @@
 
         }
 
-        // reset
+        /* RESET */
+
         function resetGame() {
 
             stopAuto()
@@ -269,7 +334,8 @@
 
         }
 
-        // speak
+        /* SPEAK */
+
         function speakNumber(num) {
 
             let letter = ""
@@ -297,7 +363,8 @@
 
         }
 
-        // history render
+        /* HISTORY */
+
         function renderHistory() {
 
             historyGrid.innerHTML = ""
@@ -314,7 +381,8 @@
 
         }
 
-        // draw number
+        /* DRAW */
+
         async function drawNumber() {
 
             if (!started) return
@@ -342,7 +410,17 @@
 
         }
 
-        // auto
+        /* MOBILE TAP */
+
+        function tapDraw() {
+
+            if (!speechSynthesis.speaking)
+                drawNumber()
+
+        }
+
+        /* AUTO */
+
         function startAuto() {
 
             if (!started) startGame()
@@ -372,7 +450,8 @@
 
         }
 
-        // space
+        /* SPACEBAR */
+
         document.addEventListener("keydown", function (e) {
 
             if (e.code === "Space") {
@@ -386,7 +465,8 @@
 
         })
 
-        // fullscreen
+        /* FULLSCREEN */
+
         function toggleFullscreen() {
 
             if (!document.fullscreenElement)
